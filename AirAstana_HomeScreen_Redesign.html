@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air Astana — Interactive Prototype</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #9B7B3A;
+      --gold-light: #F5EDD8;
+      --gold-mid:   #C4A35A;
+      --navy:       #1B2744;
+      --navy-mid:   #2D3F6A;
+      --navy-light: #EEF1F8;
+      --gray-text:  #6B7280;
+      --gray-border:#E2E5EE;
+      --bg:         #F6F7FA;
+      --white:      #FFFFFF;
+      --red:        #C0392B;
+      --green:      #27AE60;
+      --orange:     #E67E22;
+    }
+
+    body {
+      background: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px 60px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .page-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 8px;
+    }
+    .page-hint {
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 32px;
+    }
+
+    /* ── iPhone shell ── */
+    .iphone {
+      position: relative;
+      width: 375px;
+      background: #e4e4e6;
+      border-radius: 52px;
+      padding: 13px;
+      box-shadow:
+        0 0 0 1.5px #c4c4c6,
+        0 0 0 3px #dcdcde,
+        0 0 0 4.5px #b8b8ba,
+        0 32px 100px rgba(0,0,0,0.20),
+        0 8px 20px rgba(0,0,0,0.10);
+    }
+    .iphone::before {
+      content: '';
+      position: absolute;
+      left: -3.5px;
+      top: 108px;
+      width: 3.5px;
+      height: 34px;
+      background: #b0b0b2;
+      border-radius: 3px 0 0 3px;
+      box-shadow: 0 48px 0 #b0b0b2, 0 90px 0 #b0b0b2;
+    }
+    .iphone::after {
+      content: '';
+      position: absolute;
+      right: -3.5px;
+      top: 146px;
+      width: 3.5px;
+      height: 68px;
+      background: #b0b0b2;
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* ── Screen ── */
+    .screen {
+      width: 349px;
+      height: 754px;
+      background: var(--white);
+      border-radius: 42px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .dynamic-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 112px;
+      height: 32px;
+      background: #000;
+      border-radius: 18px;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      height: 50px;
+      padding: 16px 20px 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      background: var(--white);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .status-time { font-size: 15px; font-weight: 600; color: var(--navy); }
+    .status-icons { display: flex; align-items: center; gap: 5px; }
+    .status-icons svg { fill: var(--navy); display:block; }
+
+    /* ── Top bar (dynamic) ── */
+    .top-bar {
+      background: var(--white);
+      padding: 8px 18px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-border);
+      flex-shrink: 0;
+      min-height: 46px;
+    }
+    .top-bar-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.2px;
+    }
+    .login-block { display: flex; flex-direction: column; }
+    .login-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .login-text svg { width: 11px; height: 11px; fill: var(--gold); display:block; }
+    .login-sub { font-size: 10.5px; color: var(--gray-text); margin-top: 1px; }
+
+    /* ── Screen content areas ── */
+    .screen-content {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .screen-content.active { display: flex; }
+
+    /* ── Scroll area ── */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      background: var(--bg);
+    }
+    .scroll-area::-webkit-scrollbar { display: none; }
+
+    /* ── Cards ── */
+    .card-block {
+      background: var(--white);
+      margin-bottom: 8px;
+      padding: 16px 18px;
+    }
+    .card-block:first-child { margin-top: 0; }
+    .section-heading {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 12px;
+      letter-spacing: -0.2px;
+    }
+
+    /* ── Flight Search Widget ── */
+    .trip-type-tabs {
+      display: flex;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+    .trip-tab {
+      flex: 1;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--gray-text);
+      padding: 7px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .trip-tab.active {
+      background: var(--white);
+      color: var(--navy);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .route-box {
+      border: 1.5px solid var(--gray-border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .route-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 44px 11px 14px;
+      gap: 10px;
+    }
+    .route-row:first-child { border-bottom: 1px solid var(--gray-border); }
+    .route-label { font-size: 10.5px; font-weight: 600; color: var(--gray-text); width: 28px; flex-shrink: 0; }
+    .route-value { font-size: 14px; color: var(--navy); font-weight: 500; }
+    .route-placeholder { font-size: 14px; color: #C4C7D0; font-weight: 500; }
+    .swap-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .swap-btn svg { width: 15px; height: 15px; display:block; }
+    .date-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .date-field {
+      flex: 1;
+      border: 1.5px solid var(--gray-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--bg);
+    }
+    .date-label { font-size: 10px; font-weight: 600; color: var(--gray-text); margin-bottom: 3px; }
+    .date-val { font-size: 13px; color: #C4C7D0; font-weight: 500; }
+    .pax-field {
+      border: 1.5px solid var(--gray-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .pax-label { font-size: 10px; font-weight: 600; color: var(--gray-text); margin-right: 8px; }
+    .pax-val { font-size: 13px; color: var(--navy); font-weight: 600; }
+    .pax-chevron svg { width: 16px; height: 16px; fill: #ccc; display:block; }
+    .search-btn {
+      width: 100%;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Value prop card ── */
+    .value-card-inner {
+      border: 1.5px solid var(--gray-border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .value-card-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .value-card-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .value-benefits { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .value-benefit { display: flex; align-items: flex-start; gap: 9px; }
+    .benefit-dot { width: 5px; height: 5px; background: var(--gold); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .benefit-text { font-size: 12px; color: var(--gray-text); line-height: 1.35; }
+    .value-signin-btn {
+      width: 100%;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .value-register-link { text-align: center; font-size: 11px; color: var(--gold); font-weight: 600; }
+
+    /* ── Flight Status widget ── */
+    .flight-status-widget { display: flex; align-items: center; justify-content: space-between; }
+    .fs-left { display: flex; align-items: center; gap: 12px; }
+    .fs-icon {
+      width: 36px; height: 36px;
+      background: var(--navy-light);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fs-icon svg { width: 18px; height: 18px; fill: var(--navy); display:block; }
+    .fs-label { font-size: 10px; color: var(--gray-text); font-weight: 500; }
+    .fs-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .fs-chevron svg { width: 18px; height: 18px; fill: #ccc; display:block; }
+
+    /* ── Destinations carousel ── */
+    .dest-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+    .dest-scroll::-webkit-scrollbar { display: none; }
+    .dest-card { flex-shrink: 0; width: 130px; height: 90px; border-radius: 10px; position: relative; overflow: hidden; }
+    .dest-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+    .dest-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.0) 55%); }
+    .dest-name { position: absolute; bottom: 8px; left: 10px; font-size: 12px; font-weight: 700; color: #fff; }
+    .dest-price { position: absolute; bottom: 22px; left: 10px; font-size: 9px; color: rgba(255,255,255,0.8); font-weight: 500; }
+
+    /* ── Flight result cards (Book screen) ── */
+    .flight-card {
+      border: 1.5px solid var(--gray-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: var(--white);
+    }
+    .flight-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .flight-route { font-size: 16px; font-weight: 800; color: var(--navy); }
+    .flight-price { font-size: 15px; font-weight: 800; color: var(--gold); }
+    .flight-price-sub { font-size: 9px; color: var(--gray-text); font-weight: 400; text-align: right; }
+    .flight-times { display: flex; align-items: center; gap: 8px; }
+    .flight-time { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .flight-duration {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .flight-duration-line {
+      height: 1px;
+      background: var(--gray-border);
+      position: relative;
+      margin-bottom: 3px;
+    }
+    .flight-duration-line::after {
+      content: '✈';
+      position: absolute;
+      right: -2px;
+      top: -7px;
+      font-size: 12px;
+    }
+    .flight-duration-text { font-size: 9px; color: var(--gray-text); text-align: center; }
+    .flight-meta { display: flex; gap: 8px; margin-top: 10px; }
+    .flight-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--navy-light);
+      color: var(--navy);
+    }
+    .flight-tag.direct { background: #E8F5E9; color: var(--green); }
+    .flight-tag.cheapest { background: var(--gold-light); color: var(--gold); }
+    .filter-chips { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1.5px solid var(--gray-border);
+      color: var(--gray-text);
+      background: var(--white);
+    }
+    .filter-chip.active { border-color: var(--navy); color: var(--navy); background: var(--navy-light); }
+
+    /* ── My Trips screen ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 32px 24px;
+    }
+    .empty-icon {
+      width: 60px; height: 60px;
+      background: var(--bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .empty-icon svg { width: 28px; height: 28px; fill: var(--gray-text); display:block; }
+    .empty-title { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--gray-text); line-height: 1.5; margin-bottom: 16px; }
+    .empty-link { font-size: 12px; color: var(--gold); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+    .quick-action-row { display: flex; gap: 10px; }
+    .quick-action {
+      flex: 1;
+      border: 1.5px solid var(--gray-border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      background: var(--white);
+    }
+    .qa-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qa-icon svg { width: 16px; height: 16px; display:block; }
+    .qa-label { font-size: 12px; font-weight: 700; color: var(--navy); }
+    .qa-sub { font-size: 10px; color: var(--gray-text); line-height: 1.3; }
+    .qa-arrow { font-size: 14px; color: var(--gold); align-self: flex-end; }
+
+    /* ── Profile screen ── */
+    .profile-auth-area {
+      background: #fff;
+      padding: 22px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .profile-plane-mark {
+      width: 52px; height: 52px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .profile-plane-mark svg { fill: var(--gold); width: 26px; height: 26px; display:block; }
+    .profile-auth-title { font-size: 19px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+    .profile-auth-sub { font-size: 12px; color: var(--gray-text); margin-bottom: 16px; line-height: 1.4; }
+    .benefit-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: var(--gold-light);
+      border-radius: 8px;
+      padding: 9px 12px;
+      margin-bottom: 18px;
+      width: 100%;
+      gap: 4px;
+    }
+    .benefit-pill { font-size: 10.5px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 4px; }
+    .benefit-check { color: var(--gold); font-weight: 800; }
+    .benefit-sep { color: var(--gold-mid); font-size: 12px; margin: 0 4px; }
+    .btn-signin-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--navy);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .btn-create-secondary {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 2px solid var(--navy);
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+    .booking-link { font-size: 12px; color: var(--gold); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+    .settings-section { background: #fff; border-top: 8px solid var(--bg); flex-shrink: 0; }
+    .settings-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--gray-text);
+      text-transform: uppercase;
+      padding: 11px 18px 6px;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--gray-border);
+      cursor: pointer;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .settings-icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .settings-icon svg { width: 14px; height: 14px; display:block; }
+    .chevron-right svg { width: 14px; height: 14px; fill: #ccc; display:block; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      display: flex;
+      background: var(--white);
+      border-top: 1px solid var(--gray-border);
+      padding: 8px 0 4px;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .nav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg { width: 22px; height: 22px; display:block; }
+    .nav-label { font-size: 10px; font-weight: 500; color: #B0B4C0; transition: color 0.15s; }
+    .nav-item.active .nav-label { color: var(--navy); font-weight: 700; }
+    .nav-item.active .nav-icon svg { fill: var(--navy); }
+    .nav-item:not(.active) .nav-icon svg { fill: #B0B4C0; }
+
+    /* Home indicator */
+    .home-ind { height: 18px; display: flex; align-items: center; justify-content: center; background: var(--white); flex-shrink: 0; }
+    .home-bar { width: 108px; height: 4px; background: #000; border-radius: 2px; opacity: 0.15; }
+
+    /* ── Change log below phone ── */
+    .changes-section {
+      margin-top: 36px;
+      max-width: 349px;
+      width: 100%;
+    }
+    .changes-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ccc;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .change-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .change-item:last-child { border-bottom: none; }
+    .change-dot {
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .change-text { font-size: 11.5px; color: var(--gray-text); line-height: 1.4; }
+    .change-text strong { color: var(--navy); font-weight: 600; }
+
+    svg { display: block; }
+  </style>
+</head>
+<body>
+
+  <p class="page-label">Air Astana · Redesign Prototype · Guest State</p>
+  <p class="page-hint">Tap the bottom navigation to move between screens</p>
+
+  <div class="iphone">
+    <div class="screen">
+      <div class="dynamic-island"></div>
+
+      <!-- ── Status bar (always shown) ── -->
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="11" viewBox="0 0 16 11"><rect x="0" y="7" width="2.8" height="4" rx="0.7"/><rect x="4.2" y="5" width="2.8" height="6" rx="0.7"/><rect x="8.4" y="2.5" width="2.8" height="8.5" rx="0.7"/><rect x="12.6" y="0" width="2.8" height="11" rx="0.7" opacity="0.32"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/><path d="M2.5 5.8a7 7 0 0110 0L11 7.2a5 5 0 00-7 0L2.5 5.8z"/><path d="M0 3.2a10.5 10.5 0 0115 0l-1.5 1.5A8.5 8.5 0 001.5 4.7L0 3.2z"/></svg>
+          <svg width="24" height="11" viewBox="0 0 24 11"><rect x="0" y="1" width="20" height="9" rx="2.2" fill="none" stroke="#1B2744" stroke-width="1.2" opacity="0.65"/><rect x="21" y="3.2" width="2" height="4.6" rx="1" opacity="0.4"/><rect x="1.3" y="2.3" width="15" height="6.4" rx="1.3"/></svg>
+        </div>
+      </div>
+
+      <!-- ── Top bar (swapped by JS) ── -->
+      <div id="topbar" class="top-bar">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- ══════════════════════════════════
+           SCREEN: HOME
+      ══════════════════════════════════ -->
+      <div id="screen-home" class="screen-content active">
+        <div class="scroll-area">
+
+          <!-- ① Flight search widget — first element -->
+          <div class="card-block">
+            <div class="section-heading">Search Flights</div>
+            <div class="trip-type-tabs">
+              <span class="trip-tab active">Return</span>
+              <span class="trip-tab">One Way</span>
+              <span class="trip-tab">Multi-City</span>
+            </div>
+            <div class="route-box">
+              <div class="route-row">
+                <span class="route-label">From</span>
+                <span class="route-placeholder">City or airport</span>
+              </div>
+              <div class="route-row">
+                <span class="route-label">To</span>
+                <span class="route-placeholder">City or airport</span>
+              </div>
+              <div class="swap-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9B7B3A" stroke-width="2.2" stroke-linecap="round"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l4-4M17 20l-4-4"/></svg>
+              </div>
+            </div>
+            <div class="date-row">
+              <div class="date-field">
+                <div class="date-label">Departure</div>
+                <div class="date-val">Select date</div>
+              </div>
+              <div class="date-field">
+                <div class="date-label">Return</div>
+                <div class="date-val">Select date</div>
+              </div>
+            </div>
+            <div class="pax-field">
+              <div><span class="pax-label">Passengers &nbsp;</span><span class="pax-val">1 Adult</span></div>
+              <div class="pax-chevron"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg></div>
+            </div>
+            <button class="search-btn" onclick="navigate('book')">Search flights</button>
+          </div>
+
+          <!-- ② Value prop card — no Nomad Club references -->
+          <div class="card-block">
+            <div class="value-card-inner">
+              <div class="value-card-eyebrow">Air Astana App</div>
+              <div class="value-card-title">Book, manage and check in — all in one place</div>
+              <div class="value-benefits">
+                <div class="value-benefit"><div class="benefit-dot"></div><span class="benefit-text">Book flights and manage your booking anytime</span></div>
+                <div class="value-benefit"><div class="benefit-dot"></div><span class="benefit-text">Online check-in and digital boarding pass</span></div>
+                <div class="value-benefit"><div class="benefit-dot"></div><span class="benefit-text">Real-time flight status updates</span></div>
+                <div class="value-benefit"><div class="benefit-dot"></div><span class="benefit-text">Exclusive fares for app users</span></div>
+              </div>
+              <button class="value-signin-btn" onclick="navigate('profile')">Sign in</button>
+              <div class="value-register-link">New to Air Astana? Register →</div>
+            </div>
+          </div>
+
+          <!-- ③ Flight Status -->
+          <div class="card-block" style="padding-top:14px;padding-bottom:14px;">
+            <div class="flight-status-widget">
+              <div class="fs-left">
+                <div class="fs-icon">
+                  <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                </div>
+                <div>
+                  <div class="fs-label">Check a flight</div>
+                  <div class="fs-title">Flight Status</div>
+                </div>
+              </div>
+              <div class="fs-chevron"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg></div>
+            </div>
+          </div>
+
+          <!-- ④ Destinations -->
+          <div class="card-block">
+            <div class="section-heading">Discover Our Destinations</div>
+            <div class="dest-scroll">
+              <div class="dest-card">
+                <div class="dest-bg" style="background:linear-gradient(135deg,#E8C87A,#8B6914);">🌄</div>
+                <div class="dest-scrim"></div>
+                <div class="dest-price">from 89,000 KZT</div>
+                <div class="dest-name">Batumi</div>
+              </div>
+              <div class="dest-card">
+                <div class="dest-bg" style="background:linear-gradient(135deg,#B0C4E0,#3A6090);">🏙️</div>
+                <div class="dest-scrim"></div>
+                <div class="dest-price">from 54,000 KZT</div>
+                <div class="dest-name">Baku</div>
+              </div>
+              <div class="dest-card">
+                <div class="dest-bg" style="background:linear-gradient(135deg,#D4B896,#806040);">🕌</div>
+                <div class="dest-scrim"></div>
+                <div class="dest-price">from 112,000 KZT</div>
+                <div class="dest-name">Dubai</div>
+              </div>
+              <div class="dest-card">
+                <div class="dest-bg" style="background:linear-gradient(135deg,#A8C4E8,#3060A0);">🎡</div>
+                <div class="dest-scrim"></div>
+                <div class="dest-price">from 237,000 KZT</div>
+                <div class="dest-name">London</div>
+              </div>
+              <div class="dest-card">
+                <div class="dest-bg" style="background:linear-gradient(135deg,#C8E0B0,#4A8040);">🏔️</div>
+                <div class="dest-scrim"></div>
+                <div class="dest-price">from 78,000 KZT</div>
+                <div class="dest-name">Tbilisi</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:8px;"></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           SCREEN: BOOK (results state)
+      ══════════════════════════════════ -->
+      <div id="screen-book" class="screen-content">
+        <div class="scroll-area">
+          <div class="card-block" style="padding-bottom:12px;">
+            <!-- Compact search summary -->
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;color:var(--navy);">ALA → LHR &nbsp;·&nbsp; Return</div>
+                <div style="font-size:11px;color:var(--gray-text);margin-top:2px;">14 Apr – 21 Apr &nbsp;·&nbsp; 1 Adult</div>
+              </div>
+              <div style="font-size:12px;color:var(--gold);font-weight:600;">Edit →</div>
+            </div>
+
+            <div class="filter-chips">
+              <div class="filter-chip active">All</div>
+              <div class="filter-chip">Direct</div>
+              <div class="filter-chip">Cheapest</div>
+              <div class="filter-chip">Fastest</div>
+              <div class="filter-chip">Morning</div>
+            </div>
+          </div>
+
+          <div style="padding:0 18px;">
+            <!-- Flight result 1 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 979 · Air Astana</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price">237,085 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">06:30</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">8h 20m · Direct</div>
+                </div>
+                <div class="flight-time">10:50</div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag direct">Direct</div>
+                <div class="flight-tag cheapest">Cheapest</div>
+                <div class="flight-tag">Economy</div>
+              </div>
+            </div>
+
+            <!-- Flight result 2 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 979 · Air Astana</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price">312,400 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">06:30</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">8h 20m · Direct</div>
+                </div>
+                <div class="flight-time">10:50</div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag direct">Direct</div>
+                <div class="flight-tag">Business</div>
+              </div>
+            </div>
+
+            <!-- Flight result 3 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 119 + transfer · via FRA</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price" style="color:var(--gray-text);">204,500 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">09:15</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">14h 05m · 1 stop</div>
+                </div>
+                <div class="flight-time">21:20</div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag">1 stop · FRA</div>
+                <div class="flight-tag">Economy</div>
+              </div>
+            </div>
+          </div>
+          <div style="height:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           SCREEN: MY TRIPS
+      ══════════════════════════════════ -->
+      <div id="screen-mytrips" class="screen-content">
+        <div class="scroll-area" style="background:#fff;">
+
+          <!-- Empty state for guest -->
+          <div class="card-block">
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+              </div>
+              <div class="empty-title">No upcoming trips</div>
+              <div class="empty-sub">Sign in to see your bookings, boarding passes and travel history in one place.</div>
+              <div class="empty-link" onclick="navigate('profile')">Sign in to view your trips →</div>
+            </div>
+          </div>
+
+          <!-- Guest booking lookup -->
+          <div class="card-block" style="padding-top:12px;padding-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--navy);">Have a booking?</div>
+                <div style="font-size:11px;color:var(--gray-text);margin-top:2px;">Find it with your reference number</div>
+              </div>
+              <div style="font-size:12px;color:var(--gold);font-weight:700;padding:8px 14px;border:1.5px solid var(--gold);border-radius:8px;">Find booking</div>
+            </div>
+          </div>
+
+          <!-- Quick actions — Check-In and Flight Status (moved from Menu) -->
+          <div class="card-block">
+            <div class="section-heading">Quick Actions</div>
+            <div class="quick-action-row">
+
+              <div class="quick-action">
+                <div class="qa-icon" style="background:#E8F5E9;">
+                  <svg viewBox="0 0 24 24" fill="#27AE60"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                </div>
+                <div class="qa-label">Online Check-In</div>
+                <div class="qa-sub">Check in from 30h before departure</div>
+                <div class="qa-arrow">→</div>
+              </div>
+
+              <div class="quick-action">
+                <div class="qa-icon" style="background:var(--navy-light);">
+                  <svg viewBox="0 0 24 24" fill="#1B2744"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                </div>
+                <div class="qa-label">Flight Status</div>
+                <div class="qa-sub">Track any Air Astana flight</div>
+                <div class="qa-arrow">→</div>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="height:8px;"></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           SCREEN: PROFILE
+      ══════════════════════════════════ -->
+      <div id="screen-profile" class="screen-content">
+        <div class="scroll-area" style="background:var(--bg);">
+
+          <div class="profile-auth-area" style="background:var(--white);margin-bottom:8px;">
+            <div class="profile-plane-mark">
+              <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+            </div>
+            <div class="profile-auth-title">Welcome to Air Astana</div>
+            <div class="profile-auth-sub">Sign in to access your bookings,<br>boarding passes and more.</div>
+            <div class="benefit-strip">
+              <div class="benefit-pill"><span class="benefit-check">✓</span> Earn Miles</div>
+              <div class="benefit-sep">·</div>
+              <div class="benefit-pill"><span class="benefit-check">✓</span> Check-in alerts</div>
+              <div class="benefit-sep">·</div>
+              <div class="benefit-pill"><span class="benefit-check">✓</span> Manage bookings</div>
+            </div>
+            <!-- Correct hierarchy: Sign In (primary) above Create Account (secondary) -->
+            <button class="btn-signin-primary">Sign In</button>
+            <button class="btn-create-secondary">Create Account</button>
+            <div class="booking-link">Have a booking? Find it here →</div>
+          </div>
+
+          <!-- App Settings, Help, Contacts moved from Menu -->
+          <div class="settings-section">
+            <div class="settings-label">Account &amp; Settings</div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <div class="settings-icon" style="background:rgba(155,123,58,0.08);border:1.5px solid rgba(155,123,58,0.22);">
+                  <svg viewBox="0 0 24 24" fill="#9B7B3A"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.48.48 0 00.12.6l2.03 1.58c-.05.3-.09.63-.09.95s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.48.48 0 00-.12-.6l-2.01-1.58zM12 15.6a3.6 3.6 0 110-7.2 3.6 3.6 0 010 7.2z"/></svg>
+                </div>
+                App Settings
+              </div>
+              <div class="chevron-right"><svg viewBox="0 0 24 24" fill="#ccc"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg></div>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <div class="settings-icon" style="background:rgba(155,123,58,0.08);border:1.5px solid rgba(155,123,58,0.22);">
+                  <svg viewBox="0 0 24 24" fill="#9B7B3A"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                </div>
+                Help &amp; Feedback
+              </div>
+              <div class="chevron-right"><svg viewBox="0 0 24 24" fill="#ccc"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg></div>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <div class="settings-icon" style="background:rgba(155,123,58,0.08);border:1.5px solid rgba(155,123,58,0.22);">
+                  <svg viewBox="0 0 24 24" fill="#9B7B3A"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                </div>
+                Our Contacts
+              </div>
+              <div class="chevron-right"><svg viewBox="0 0 24 24" fill="#ccc"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg></div>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <div class="settings-icon" style="background:rgba(155,123,58,0.08);border:1.5px solid rgba(155,123,58,0.22);">
+                  <svg viewBox="0 0 24 24" fill="#9B7B3A"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 3a7 7 0 110 14A7 7 0 0112 5zm-1 3v5l4 2.5-.75 1.23L10 14V8h1z"/></svg>
+                </div>
+                About Air Astana
+              </div>
+              <div class="chevron-right"><svg viewBox="0 0 24 24" fill="#ccc"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg></div>
+            </div>
+
+          </div>
+
+          <div style="height:8px;"></div>
+        </div>
+      </div>
+
+      <!-- ── Bottom nav (shared, always visible) ── -->
+      <div class="bottom-nav">
+        <div class="nav-item active" data-tab="home" onclick="navigate('home')">
+          <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+          <span class="nav-label">Home</span>
+        </div>
+        <div class="nav-item" data-tab="book" onclick="navigate('book')">
+          <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+          <span class="nav-label">Book</span>
+        </div>
+        <div class="nav-item" data-tab="mytrips" onclick="navigate('mytrips')">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+          </div>
+          <span class="nav-label">My Trips</span>
+        </div>
+        <div class="nav-item" data-tab="profile" onclick="navigate('profile')">
+          <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/></svg></div>
+          <span class="nav-label">Profile</span>
+        </div>
+      </div>
+      <div class="home-ind"><div class="home-bar"></div></div>
+
+    </div>
+  </div>
+
+  <!-- ── Compact change log ── -->
+  <div class="changes-section">
+    <div class="changes-title">Recommendations implemented</div>
+
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>Home:</strong> Flight search widget added as first element — booking now starts on the home screen, matching every major comparator airline.</div>
+    </div>
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>Home:</strong> Nomad Club banner replaced with a value proposition card — concrete app benefits shown, no loyalty marketing for guests.</div>
+    </div>
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>Home:</strong> "What is New?" carousel removed. Flight Status surfaced on home screen (was buried in Menu).</div>
+    </div>
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>Nav:</strong> Menu tab eliminated. 4-tab nav: Home, Book, My Trips, Profile. Calendar icon replaces luggage icon for My Trips. Notification bell hidden from guests.</div>
+    </div>
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>My Trips:</strong> Check-In moved exclusively here (from Menu). Flight Status also available here. Guest booking lookup surfaced.</div>
+    </div>
+    <div class="change-item">
+      <div class="change-dot"></div>
+      <div class="change-text"><strong>Profile:</strong> Redesigned as a functional auth screen. Sign In (primary) above Create Account (secondary) — button hierarchy corrected. Three-item benefit strip added. App Settings, Help &amp; Feedback and Contacts moved here from Menu.</div>
+    </div>
+  </div>
+
+  <script>
+    const topBarContent = {
+      home: `
+        <div class="login-block">
+          <div class="login-text">
+            Log in
+            <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z"/></svg>
+          </div>
+          <span class="login-sub">Enjoy a variety of exclusive benefits</span>
+        </div>`,
+      book: `<div class="top-bar-title">Book Flights</div>`,
+      mytrips: `<div class="top-bar-title">My Trips</div>`,
+      profile: `<div class="top-bar-title">Profile</div>`
+    };
+
+    function navigate(tab) {
+      // Update screens
+      document.querySelectorAll('.screen-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('screen-' + tab).classList.add('active');
+
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+
+      // Update top bar
+      document.getElementById('topbar').innerHTML = topBarContent[tab] || '';
+    }
+
+    // Init top bar
+    navigate('home');
+  </script>
+
+</body>
+</html>
