@@ -170,13 +170,62 @@
     }
     .scroll-area::-webkit-scrollbar { display: none; }
 
-    /* ── Book screen sticky search panel ── */
+    /* ── Book screen full widget (inside scroll area) ── */
     .book-widget-panel {
       background: #fff;
       padding: 14px 18px 16px;
       border-bottom: 1px solid rgba(155,123,58,0.15);
       box-shadow: 0 2px 8px rgba(27,39,68,0.07);
+    }
+
+    /* ── Book screen compact sticky bar ── */
+    .book-sticky-bar {
+      background: var(--white);
+      padding: 0 18px;
+      border-bottom: 1px solid var(--gray-border);
+      box-shadow: 0 2px 8px rgba(27,39,68,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       flex-shrink: 0;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+    }
+    .book-sticky-bar.visible {
+      max-height: 56px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      opacity: 1;
+    }
+    .bsb-info { flex: 1; min-width: 0; }
+    .bsb-route {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .bsb-meta {
+      font-size: 11px;
+      color: var(--gray-text);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bsb-modify-btn {
+      background: var(--navy-light);
+      color: var(--navy);
+      border: none;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: 12px;
     }
 
     /* ── Cards ── */
@@ -395,6 +444,7 @@
     }
     .flight-tag.direct { background: #E8F5E9; color: var(--green); }
     .flight-tag.cheapest { background: var(--gold-light); color: var(--gold); }
+    .flight-tag.fastest { background: #EEF2FF; color: #4F5BD5; }
     .filter-chips { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
     .filter-chips::-webkit-scrollbar { display: none; }
     .filter-chip {
@@ -767,44 +817,54 @@
       ══════════════════════════════════ -->
       <div id="screen-book" class="screen-content">
 
-        <!-- ── Sticky search widget (always visible) ── -->
-        <div class="book-widget-panel">
-          <div class="trip-type-tabs" style="margin-bottom:10px;">
-            <span class="trip-tab active">Return</span>
-            <span class="trip-tab">One Way</span>
-            <span class="trip-tab">Multi-City</span>
+        <!-- ── Compact sticky bar (hidden, reveals on scroll) ── -->
+        <div class="book-sticky-bar" id="book-sticky-bar">
+          <div class="bsb-info">
+            <div class="bsb-route">ALA → LHR</div>
+            <div class="bsb-meta">14–21 Apr · 1 Adult · Return</div>
           </div>
-          <div class="route-box" style="margin-bottom:10px;">
-            <div class="route-row">
-              <span class="route-label">From</span>
-              <span class="route-placeholder" style="color:var(--navy);font-weight:600;">Almaty (ALA)</span>
-            </div>
-            <div class="route-row">
-              <span class="route-label">To</span>
-              <span class="route-placeholder" style="color:var(--navy);font-weight:600;">London (LHR)</span>
-            </div>
-            <div class="swap-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#9B7B3A" stroke-width="2.2" stroke-linecap="round"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l4-4M17 20l-4-4"/></svg>
-            </div>
-          </div>
-          <div class="date-row" style="margin-bottom:10px;">
-            <div class="date-field">
-              <div class="date-label">Departure</div>
-              <div class="date-val" style="color:var(--navy);font-weight:600;">14 Apr 2025</div>
-            </div>
-            <div class="date-field">
-              <div class="date-label">Return</div>
-              <div class="date-val" style="color:var(--navy);font-weight:600;">21 Apr 2025</div>
-            </div>
-          </div>
-          <div class="pax-field" style="margin-bottom:10px;">
-            <div><span class="pax-label">Passengers &nbsp;</span><span class="pax-val">1 Adult</span></div>
-            <div class="pax-chevron"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg></div>
-          </div>
-          <button class="search-btn" style="margin-top:0;">Search flights</button>
+          <button class="bsb-modify-btn" onclick="bookScrollToTop()">Change</button>
         </div>
 
-        <div class="scroll-area">
+        <div class="scroll-area" id="book-scroll-area">
+
+          <!-- ── Full search widget (scrolls with content) ── -->
+          <div class="book-widget-panel">
+            <div class="trip-type-tabs" style="margin-bottom:10px;">
+              <span class="trip-tab active">Return</span>
+              <span class="trip-tab">One Way</span>
+              <span class="trip-tab">Multi-City</span>
+            </div>
+            <div class="route-box" style="margin-bottom:10px;">
+              <div class="route-row">
+                <span class="route-label">From</span>
+                <span class="route-placeholder" style="color:var(--navy);font-weight:600;">Almaty (ALA)</span>
+              </div>
+              <div class="route-row">
+                <span class="route-label">To</span>
+                <span class="route-placeholder" style="color:var(--navy);font-weight:600;">London (LHR)</span>
+              </div>
+              <div class="swap-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9B7B3A" stroke-width="2.2" stroke-linecap="round"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l4-4M17 20l-4-4"/></svg>
+              </div>
+            </div>
+            <div class="date-row" style="margin-bottom:10px;">
+              <div class="date-field">
+                <div class="date-label">Departure</div>
+                <div class="date-val" style="color:var(--navy);font-weight:600;">14 Apr 2025</div>
+              </div>
+              <div class="date-field">
+                <div class="date-label">Return</div>
+                <div class="date-val" style="color:var(--navy);font-weight:600;">21 Apr 2025</div>
+              </div>
+            </div>
+            <div class="pax-field" style="margin-bottom:10px;">
+              <div><span class="pax-label">Passengers &nbsp;</span><span class="pax-val">1 Adult</span></div>
+              <div class="pax-chevron"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg></div>
+            </div>
+            <button class="search-btn" style="margin-top:0;">Search flights</button>
+          </div>
+
           <div class="card-block" style="padding-top:14px;padding-bottom:12px;">
             <div class="filter-chips">
               <div class="filter-chip active">All</div>
@@ -891,6 +951,85 @@
               </div>
               <div class="flight-meta">
                 <div class="flight-tag">1 stop · FRA</div>
+                <div class="flight-tag">Economy</div>
+              </div>
+            </div>
+
+            <!-- Flight result 4 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 875 + transfer · via DXB</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price" style="color:var(--gray-text);">189,900 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">11:40</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">16h 50m · 1 stop</div>
+                </div>
+                <div class="flight-time">04:30<span style="font-size:9px;color:var(--gold);vertical-align:super;">+1</span></div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag">1 stop · DXB</div>
+                <div class="flight-tag">Economy</div>
+              </div>
+            </div>
+
+            <!-- Flight result 5 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 979 · Air Astana</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price">428,600 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">06:30</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">8h 20m · Direct</div>
+                </div>
+                <div class="flight-time">10:50</div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag direct">Direct</div>
+                <div class="flight-tag">Business</div>
+                <div class="flight-tag fastest">Fastest</div>
+              </div>
+            </div>
+
+            <!-- Flight result 6 -->
+            <div class="flight-card">
+              <div class="flight-card-header">
+                <div>
+                  <div class="flight-route">ALA → LHR</div>
+                  <div style="font-size:10px;color:var(--gray-text);margin-top:2px;">KC 241 + transfer · via IST</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="flight-price" style="color:var(--gray-text);">221,300 KZT</div>
+                  <div class="flight-price-sub">per person, one way</div>
+                </div>
+              </div>
+              <div class="flight-times">
+                <div class="flight-time">14:55</div>
+                <div class="flight-duration">
+                  <div class="flight-duration-line"></div>
+                  <div class="flight-duration-text">13h 30m · 1 stop</div>
+                </div>
+                <div class="flight-time">04:25<span style="font-size:9px;color:var(--gold);vertical-align:super;">+1</span></div>
+              </div>
+              <div class="flight-meta">
+                <div class="flight-tag">1 stop · IST</div>
                 <div class="flight-tag">Economy</div>
               </div>
             </div>
@@ -1115,6 +1254,38 @@
 
       // Update top bar
       document.getElementById('topbar').innerHTML = topBarContent[tab] || '';
+
+      // Reset book screen scroll state when navigating to it
+      if (tab === 'book') {
+        const scrollArea = document.getElementById('book-scroll-area');
+        const stickyBar = document.getElementById('book-sticky-bar');
+        if (scrollArea) scrollArea.scrollTop = 0;
+        if (stickyBar) stickyBar.classList.remove('visible');
+      }
+    }
+
+    // Book screen sticky bar scroll logic
+    (function() {
+      document.addEventListener('DOMContentLoaded', function() {
+        const scrollArea = document.getElementById('book-scroll-area');
+        const stickyBar = document.getElementById('book-sticky-bar');
+        if (!scrollArea || !stickyBar) return;
+
+        scrollArea.addEventListener('scroll', function() {
+          if (scrollArea.scrollTop > 80) {
+            stickyBar.classList.add('visible');
+          } else {
+            stickyBar.classList.remove('visible');
+          }
+        });
+      });
+    })();
+
+    function bookScrollToTop() {
+      const scrollArea = document.getElementById('book-scroll-area');
+      const stickyBar = document.getElementById('book-sticky-bar');
+      if (scrollArea) scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+      if (stickyBar) stickyBar.classList.remove('visible');
     }
 
     // Init top bar
