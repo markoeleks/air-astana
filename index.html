@@ -170,6 +170,15 @@
     }
     .scroll-area::-webkit-scrollbar { display: none; }
 
+    /* ── Book screen sticky search panel ── */
+    .book-widget-panel {
+      background: #fff;
+      padding: 14px 18px 16px;
+      border-bottom: 1px solid rgba(155,123,58,0.15);
+      box-shadow: 0 2px 8px rgba(27,39,68,0.07);
+      flex-shrink: 0;
+    }
+
     /* ── Cards ── */
     .card-block {
       background: var(--white);
@@ -757,17 +766,46 @@
            SCREEN: BOOK (results state)
       ══════════════════════════════════ -->
       <div id="screen-book" class="screen-content">
-        <div class="scroll-area">
-          <div class="card-block" style="padding-bottom:12px;">
-            <!-- Compact search summary -->
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;color:var(--navy);">ALA → LHR &nbsp;·&nbsp; Return</div>
-                <div style="font-size:11px;color:var(--gray-text);margin-top:2px;">14 Apr – 21 Apr &nbsp;·&nbsp; 1 Adult</div>
-              </div>
-              <div style="font-size:12px;color:var(--gold);font-weight:600;">Edit →</div>
-            </div>
 
+        <!-- ── Sticky search widget (always visible) ── -->
+        <div class="book-widget-panel">
+          <div class="trip-type-tabs" style="margin-bottom:10px;">
+            <span class="trip-tab active">Return</span>
+            <span class="trip-tab">One Way</span>
+            <span class="trip-tab">Multi-City</span>
+          </div>
+          <div class="route-box" style="margin-bottom:10px;">
+            <div class="route-row">
+              <span class="route-label">From</span>
+              <span class="route-placeholder" style="color:var(--navy);font-weight:600;">Almaty (ALA)</span>
+            </div>
+            <div class="route-row">
+              <span class="route-label">To</span>
+              <span class="route-placeholder" style="color:var(--navy);font-weight:600;">London (LHR)</span>
+            </div>
+            <div class="swap-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9B7B3A" stroke-width="2.2" stroke-linecap="round"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l4-4M17 20l-4-4"/></svg>
+            </div>
+          </div>
+          <div class="date-row" style="margin-bottom:10px;">
+            <div class="date-field">
+              <div class="date-label">Departure</div>
+              <div class="date-val" style="color:var(--navy);font-weight:600;">14 Apr 2025</div>
+            </div>
+            <div class="date-field">
+              <div class="date-label">Return</div>
+              <div class="date-val" style="color:var(--navy);font-weight:600;">21 Apr 2025</div>
+            </div>
+          </div>
+          <div class="pax-field" style="margin-bottom:10px;">
+            <div><span class="pax-label">Passengers &nbsp;</span><span class="pax-val">1 Adult</span></div>
+            <div class="pax-chevron"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg></div>
+          </div>
+          <button class="search-btn" style="margin-top:0;">Search flights</button>
+        </div>
+
+        <div class="scroll-area">
+          <div class="card-block" style="padding-top:14px;padding-bottom:12px;">
             <div class="filter-chips">
               <div class="filter-chip active">All</div>
               <div class="filter-chip">Direct</div>
